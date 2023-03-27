@@ -2,24 +2,31 @@ import { useState } from "react";
 import Image from "next/image";
 
 import { auth } from "@/lib/firebase";
-import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
+import {
+  RecaptchaVerifier,
+  signInWithPopup,
+  signInWithPhoneNumber,
+  GoogleAuthProvider,
+  signOut,
+} from "firebase/auth";
 
 import styles from "@/styles/Home.module.css";
 import Login from "@/components/Form/Login";
 
 type User = {
   displayName: string;
-  email: string;
-  photoURL: string;
+  email?: string;
+  photoURL?: string;
 };
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [status, setStatus] = useState<string>("login");
 
   const googleAuth = new GoogleAuthProvider();
-
   const loginWithGoogle = async () => {
     signInWithPopup(auth, googleAuth)
       .then((response) => {
@@ -27,10 +34,10 @@ export default function Home() {
         const credential = GoogleAuthProvider.credentialFromResult(response);
         const token = credential?.accessToken;
         // The signed-in user info.
-        const user = response.user;
+        const user_data = response.user;
 
-        if (user) {
-          const { displayName, email, photoURL } = user.providerData[0];
+        if (user_data) {
+          const { displayName, email, photoURL } = user_data.providerData[0];
           if (displayName && email && photoURL) {
             setUser({ displayName, email, photoURL });
           }
@@ -42,6 +49,78 @@ export default function Home() {
       })
       .catch((err) => {
         console.log(err);
+        setError(err.message);
+      });
+  };
+
+  /**
+   * login with phone number
+   */
+
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState<string>("");
+  const [confirmResult, setConfirmResult] = useState<any>(null);
+
+  const handleGetPhone = (data: string) => {
+    setPhone(data);
+  };
+
+  const handleGetOTP = (data: string) => {
+    setOtp(data);
+  };
+
+  const loginWithPhone = () => {
+    setUpRecaptcha();
+    const appVerifier = window.recaptchaVerifier;
+
+    signInWithPhoneNumber(auth, `+${phone}`, appVerifier)
+      .then(function (confirmationResult) {
+        // SMS sent. Prompt user to type the code from the message, then sign the
+        // user in with confirmationResult.confirm(code).
+        console.log("confirmation Result", confirmationResult);
+        window.confirmationResult = confirmationResult;
+        // console.log(confirmationResult);
+        console.log("OTP is sent");
+      })
+      .catch(function (error) {
+        console.log(error);
+        window.recaptchaVerifier.render().then(function (widgetId) {
+          grecaptcha.reset(widgetId);
+        });
+      });
+  };
+
+  const setUpRecaptcha = () => {
+    window.recaptchaVerifier = new RecaptchaVerifier(
+      "recaptcha-container",
+      {
+        size: "invisible",
+        callback: function (response: any) {
+          console.log("Captcha Resolved");
+          // loginWithPhone();
+          setStatus("input_otp");
+        },
+        defaultCountry: "ID",
+      },
+      auth
+    );
+  };
+
+  const handleSubmitOTP = () => {
+    window.confirmationResult
+      .confirm(otp)
+      .then((result) => {
+        // User signed in successfully.
+        const user = result.user;
+        console.log(user);
+        const { phoneNumber } = user.providerData[0];
+        setUser({ displayName: phoneNumber, photoURL: null, email: null });
+        // ...
+      })
+      .catch((err) => {
+        // User couldn't sign in (bad verification code?)
+        // ...
+        console.log("otp error!, ", err);
         setError(err.message);
       });
   };
@@ -60,6 +139,13 @@ export default function Home() {
       });
   };
 
+  const loginProps = {
+    user: user,
+    error: error,
+    setUser: setUser,
+    setError: setError,
+  };
+
   return (
     <>
       <div className={styles.main}>
@@ -68,15 +154,17 @@ export default function Home() {
             <div>
               {user ? (
                 <div className={styles["user-container"]}>
-                  <Image
-                    src={user.photoURL}
-                    width={200}
-                    height={200}
-                    objectFit="cover"
-                    alt="user profile image"
-                    unoptimized
-                    className={styles["user-image"]}
-                  />
+                  {user.photoURL && (
+                    <Image
+                      src={user.photoURL}
+                      width={200}
+                      height={200}
+                      objectFit="cover"
+                      alt="user profile image"
+                      unoptimized
+                      className={styles["user-image"]}
+                    />
+                  )}
                   <h3 className={styles.username}>
                     Wellcome, {user.displayName}!
                   </h3>
@@ -87,7 +175,15 @@ export default function Home() {
               ) : (
                 <div>
                   <h1>Wellcome To My App!</h1>
-                  <Login loginWithGoogle={loginWithGoogle} />
+                  <div id="recaptcha-container"></div>
+                  <Login
+                    status={status}
+                    loginWithGoogle={loginWithGoogle}
+                    loginWithPhone={loginWithPhone}
+                    handleGetPhone={handleGetPhone}
+                    handleGetOTP={handleGetOTP}
+                    handleSubmitOTP={handleSubmitOTP}
+                  />
                 </div>
               )}
             </div>

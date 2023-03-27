@@ -1,30 +1,56 @@
-import { FormEventHandler } from "react";
 import PhoneInput from "react-phone-input-2";
 import OtpInput from "otp-input-react-18";
 
 import styles from "./Login.module.css";
 import "react-phone-input-2/lib/style.css";
 
-import { useState, useEffect } from "react";
+import { FormEventHandler, useState, useEffect } from "react";
 import { BsGoogle } from "react-icons/bs";
 
+type User = {
+  displayName: string;
+  email?: string;
+  photoURL?: string;
+};
+
 interface LoginProps {
+  status: string;
   loginWithGoogle: () => void;
+  loginWithPhone: (phone: string) => void;
+  handleGetPhone: (phone: string) => void;
+  handleGetOTP: (otp: string) => void;
+  handleSubmitOTP: () => void;
 }
 
-const Login = ({ loginWithGoogle }: LoginProps) => {
+const Login = ({
+  status,
+  loginWithGoogle,
+  loginWithPhone,
+  handleGetPhone,
+  handleGetOTP,
+  handleSubmitOTP,
+}: LoginProps) => {
   const [phone, setPhone] = useState<string>("");
   const [otp, setOtp] = useState<string>("");
-  const [status, setStatus] = useState<string>("login");
 
   const handleSubmit: FormEventHandler = async (e) => {
     e.preventDefault();
     console.log({ phone });
-    setStatus("input_otp");
+    await loginWithPhone(phone);
+  };
+
+  const handleOtpSubmit: FormEventHandler = async (e) => {
+    e.preventDefault();
+    console.log(otp);
+    await handleSubmitOTP();
   };
 
   useEffect(() => {
-    console.log({ otp });
+    handleGetPhone(phone);
+  }, [phone]);
+
+  useEffect(() => {
+    handleGetOTP(otp);
   }, [otp]);
 
   return (
@@ -33,6 +59,7 @@ const Login = ({ loginWithGoogle }: LoginProps) => {
       {status === "login" && (
         <div className={styles["full-container"]}>
           <h2>Login</h2>
+
           <form onSubmit={handleSubmit} className={styles["login-form"]}>
             <label className={styles["phone-input"]}>
               <small>Phone Number</small>
@@ -82,7 +109,7 @@ const Login = ({ loginWithGoogle }: LoginProps) => {
                 width: "32px",
               }}
             />
-            <button className={styles["login-btn"]}>
+            <button onClick={handleSubmitOTP} className={styles["login-btn"]}>
               <span>Validate</span>
             </button>
           </div>
