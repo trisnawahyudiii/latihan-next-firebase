@@ -16,9 +16,11 @@
     "eslint-config-next": "13.2.4",
     "firebase": "^9.18.0",
     "next": "13.2.4",
+    "otp-input-react-18": "^2.4.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-icons": "^4.8.0",
+    "react-phone-input-2": "^2.15.1",
     "typescript": "5.0.2"
   }
 }

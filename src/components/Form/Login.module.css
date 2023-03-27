@@ -15,6 +15,10 @@
   box-shadow: var(--shadow);
 }
 
+.full-container {
+  width: 100%;
+}
+
 .login-form {
   width: 100%;
   margin: 1rem 0;
@@ -107,4 +111,12 @@
 .google-btn:hover {
   background-color: var(--pine-tree);
   color: var(--main-white);
+}
+
+.otp-header {
+  margin-bottom: 1rem;
+}
+
+.otp-body {
+  width: 100%;
 }
