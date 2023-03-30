@@ -8,17 +8,24 @@ import {
   signInWithPhoneNumber,
   GoogleAuthProvider,
   signOut,
+  ConfirmationResult,
 } from "firebase/auth";
 
 import styles from "@/styles/Home.module.css";
 import Login from "@/components/Form/Login";
 
 type User = {
-  displayName: string;
+  displayName: string | null;
   email?: string;
   photoURL?: string;
 };
 
+declare global {
+  interface Window {
+    recaptchaVerifier: RecaptchaVerifier;
+    confirmationResult: ConfirmationResult; // 👈 turn off type checking
+  }
+}
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -114,7 +121,8 @@ export default function Home() {
         const user = result.user;
         console.log(user);
         const { phoneNumber } = user.providerData[0];
-        setUser({ displayName: phoneNumber, photoURL: null, email: null });
+        setUser({ displayName: phoneNumber });
+        setStatus("login");
         // ...
       })
       .catch((err) => {
