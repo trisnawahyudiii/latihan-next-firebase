@@ -44,7 +44,8 @@ export default function Home() {
         const user_data = response.user;
 
         if (user_data) {
-          const { displayName, email, photoURL } = user_data.providerData[0];
+          const { displayName, email, photoURL } = user_data;
+
           if (displayName && email && photoURL) {
             setUser({ displayName, email, photoURL });
           }

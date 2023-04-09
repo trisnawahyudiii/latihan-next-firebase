@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model authors {
+  id           Int            @id @default(autoincrement())
+  name         String         @db.VarChar(50)
+  email        String         @db.VarChar(50)
+  password     String         @db.VarChar(255)
+  phone        String?        @db.VarChar(15)
+  createdAt    DateTime?      @db.Timestamp(6)
+  updatedAt    DateTime?      @db.Timestamp(6)
+  book_authors book_authors[]
+}
+
+model book_authors {
+  id        Int      @id @default(autoincrement())
+  book_id   Int?
+  author_id Int?
+  authors   authors? @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  books     books?   @relation(fields: [book_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model book_categories {
+  id          Int         @id @default(autoincrement())
+  book_id     Int?
+  category_id Int?
+  books       books?      @relation(fields: [book_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  categories  categories? @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model books {
+  id              Int               @id @default(autoincrement())
+  title           String            @db.VarChar(100)
+  year            Int?
+  available       Boolean?
+  createdAt       DateTime?         @db.Timestamp(6)
+  updatedAt       DateTime?         @db.Timestamp(6)
+  book_authors    book_authors[]
+  book_categories book_categories[]
+  borrowed_books  borrowed_books[]
+}
+
+model borrowed_books {
+  id         Int      @id @default(autoincrement())
+  book_id    Int?
+  borrows_id Int?
+  books      books?   @relation(fields: [book_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  borrows    borrows? @relation(fields: [borrows_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model borrowers {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(50)
+  email     String    @db.VarChar(50)
+  password  String    @db.VarChar(255)
+  phone     String?   @db.VarChar(15)
+  createdAt DateTime? @db.Timestamp(6)
+  updatedAt DateTime? @db.Timestamp(6)
+  borrows   borrows[]
+}
+
+model borrows {
+  id             Int              @id @default(autoincrement())
+  borrower_id    Int?
+  borrow_date    DateTime?        @db.Timestamp(6)
+  return_date    DateTime?        @db.Timestamp(6)
+  createdAt      DateTime?        @db.Timestamp(6)
+  updatedAt      DateTime?        @db.Timestamp(6)
+  borrowed_books borrowed_books[]
+  borrowers      borrowers?       @relation(fields: [borrower_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model categories {
+  id              Int               @id @default(autoincrement())
+  name            String?           @db.VarChar(20)
+  createdAt       DateTime?         @db.Timestamp(6)
+  updatedAt       DateTime?         @db.Timestamp(6)
+  book_categories book_categories[]
+}
